@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בהר — ניהול לקוחות</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --border: #e8e4dc;
+    --text: #1a1a18;
+    --muted: #8a8780;
+    --accent: #3d6b4f;
+    --accent-light: #edf4ef;
+    --amber: #b87333;
+    --amber-light: #fdf3e7;
+    --blue: #2e5f8a;
+    --blue-light: #e8f0f8;
+    --pink: #9b4d6a;
+    --pink-light: #f8edf3;
+    --danger: #a33030;
+    --danger-light: #fdeaea;
+    --purple: #5a4a8a;
+    --purple-light: #f0eef8;
+    --gray-light: #f1ede6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* TOP NAV */
+  .topnav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .brand { font-size: 18px; font-weight: 600; color: var(--accent); letter-spacing: -0.3px; }
+  .brand span { color: var(--muted); font-weight: 300; font-size: 14px; margin-right: 8px; }
+  .view-toggle { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; }
+  .view-btn { padding: 5px 14px; border-radius: 6px; border: none; background: transparent; font-family: 'Heebo', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .view-btn.active { background: var(--surface); color: var(--text); font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .add-btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 7px 16px; font-family: 'Heebo', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+  /* STATS BAR */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 1.25rem 2rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat-num { font-size: 24px; font-weight: 600; color: var(--text); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat-accent { border-top: 3px solid var(--accent); }
+  .stat-amber  { border-top: 3px solid var(--amber); }
+  .stat-blue   { border-top: 3px solid var(--blue); }
+  .stat-purple { border-top: 3px solid var(--purple); }
+
+  /* FILTERS */
+  .toolbar { padding: 0 2rem 1rem; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .filter-pill { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-family: 'Heebo', sans-serif; font-size: 12px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .filter-pill.active { background: var(--text); color: white; border-color: var(--text); }
+  .search-box { margin-right: auto; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-family: 'Heebo', sans-serif; font-size: 13px; color: var(--text); width: 200px; }
+  .search-box:focus { outline: none; border-color: var(--accent); }
+
+  /* LIST VIEW */
+  .list-view { padding: 0 2rem 2rem; display: flex; flex-direction: column; gap: 8px; }
+  .lead-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; cursor: pointer; transition: all 0.15s; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+  .lead-card:hover { border-color: #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .lead-card.urgent { border-right: 3px solid var(--amber); }
+  .lc-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .lc-meta { display: flex; gap: 10px; align-items: center; margin-top: 5px; flex-wrap: wrap; }
+  .lc-detail { font-size: 12px; color: var(--muted); }
+  .lc-note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 4px; }
+  .lc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .lc-price { font-size: 14px; font-weight: 600; color: var(--text); }
+  .reminder-badge { font-size: 11px; background: var(--amber-light); color: var(--amber); border-radius: 6px; padding: 2px 8px; }
+
+  /* KANBAN VIEW */
+  .kanban-view { padding: 0 2rem 2rem; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .kb-col { background: var(--gray-light); border-radius: 10px; padding: 10px; }
+  .kb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 2px; }
+  .kb-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kb-count { font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1px 7px; color: var(--muted); }
+  .kb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.12s; }
+  .kb-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .kb-card:last-child { margin-bottom: 0; }
+  .kb-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .kb-sub { font-size: 11px; color: var(--muted); }
+  .kb-price { font-size: 12px; font-weight: 600; color: var(--text); margin-top: 6px; }
+  .kb-reminder { font-size: 10px; color: var(--amber); margin-top: 4px; }
+
+  /* BADGES */
+  .badge { font-size: 11px; font-weight: 500; border-radius: 6px; padding: 2px 8px; }
+  .b-new    { background: var(--blue-light);   color: var(--blue); }
+  .b-talk   { background: var(--amber-light);  color: var(--amber); }
+  .b-sent   { background: var(--purple-light); color: var(--purple); }
+  .b-wait   { background: var(--gray-light);   color: var(--muted); }
+  .b-ok     { background: var(--accent-light); color: var(--accent); }
+  .b-paid   { background: #e0f0e8;             color: #2d6e45; }
+  .b-cancel { background: var(--danger-light); color: var(--danger); }
+  .src-wa   { background: #e6f7f0; color: #1a7a55; }
+  .src-ig   { background: var(--pink-light);   color: var(--pink); }
+  .src-ab   { background: var(--blue-light);   color: var(--blue); }
+  .src-tel  { background: var(--amber-light);  color: var(--amber); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 24px; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .close-btn { background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer; line-height: 1; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-full { grid-column: 1 / -1; }
+  .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Heebo', sans-serif; font-size: 13px; color: var(--text); background: var(--bg);
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); background: white; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  .btn-save { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 9px 20px; font-family: 'Heebo', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 9px 16px; font-family: 'Heebo', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .btn-delete { background: none; border: 1px solid var(--danger-light); border-radius: 8px; padding: 9px 16px; font-family: 'Heebo', sans-serif; font-size: 13px; color: var(--danger); cursor: pointer; margin-left: auto; }
+
+  .hidden { display: none; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">בהר <span>ניהול לקוחות</span></div>
+  <div class="view-toggle">
+    <button class="view-btn active" onclick="setView('list')">רשימה</button>
+    <button class="view-btn" onclick="setView('kanban')">קנבן</button>
+  </div>
+  <button class="add-btn" onclick="openModal()">+ לקוח חדש</button>
+</nav>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="toolbar">
+  <button class="filter-pill active" onclick="setFilter(this,'all')">הכל</button>
+  <button class="filter-pill" onclick="setFilter(this,'new')">פנייה חדשה</button>
+  <button class="filter-pill" onclick="setFilter(this,'talk')">יצרנו קשר</button>
+  <button class="filter-pill" onclick="setFilter(this,'sent')">שלחנו פרטים</button>
+  <button class="filter-pill" onclick="setFilter(this,'wait')">ממתינים</button>
+  <button class="filter-pill" onclick="setFilter(this,'ok')">מאושר</button>
+  <button class="filter-pill" onclick="setFilter(this,'paid')">שולם</button>
+  <input class="search-box" type="text" placeholder="חיפוש לקוח..." oninput="render()" id="searchBox">
+</div>
+
+<div id="listView" class="list-view"></div>
+<div id="kanbanView" class="kanban-view hidden"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modalTitle">לקוח חדש</span>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>שם מלא</label><input id="f_name" type="text" placeholder="משפחת כהן"></div>
+      <div class="form-group"><label>טלפון</label><input id="f_phone" type="text" placeholder="050-0000000"></div>
+      <div class="form-group"><label>מאיפה הגיעו</label>
+        <select id="f_source">
+          <option value="wa">ווצאפ</option>
+          <option value="ig">אינסטגרם</option>
+          <option value="ab">Airbnb</option>
+          <option value="tel">טלפון</option>
+          <option value="other">אחר</option>
+        </select>
+      </div>
+      <div class="form-group"><label>סוג אירוע</label>
+        <select id="f_type">
+          <option value="family">משפחה / סוף שבוע</option>
+          <option value="retreat">ריטריט / יוגה</option>
+          <option value="event">אירוע פרטי</option>
+          <option value="group">קבוצה / כנס</option>
+          <option value="other">אחר</option>
+        </select>
+      </div>
+      <div class="form-group"><label>תאריכים מבוקשים</label><input id="f_dates" type="text" placeholder="14–16 מאי"></div>
+      <div class="form-group"><label>מספר אנשים</label><input id="f_people" type="text" placeholder="6"></div>
+      <div class="form-group"><label>מחיר משוער (₪)</label><input id="f_price" type="number" placeholder="0"></div>
+      <div class="form-group"><label>סטטוס</label>
+        <select id="f_status">
+          <option value="new">פנייה חדשה</option>
+          <option value="talk">יצרנו קשר</option>
+          <option value="sent">שלחנו פרטים</option>
+          <option value="wait">ממתינים לאישור</option>
+          <option value="ok">מאושר</option>
+          <option value="paid">שולם</option>
+          <option value="cancel">בוטל</option>
+        </select>
+      </div>
+      <div class="form-group"><label>תזכורת — לחזור ב</label><input id="f_reminder" type="date"></div>
+      <div class="form-group form-full"><label>הערות</label><textarea id="f_notes" placeholder="פרטים חשובים, בקשות מיוחדות..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-delete hidden" id="deleteBtn" onclick="deleteLead()">מחק</button>
+      <button class="btn-cancel" onclick="closeModal()">ביטול</button>
+      <button class="btn-save" onclick="saveLead()">שמור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUS = {
+  new:    { label: 'פנייה חדשה',     cls: 'b-new' },
+  talk:   { label: 'יצרנו קשר',      cls: 'b-talk' },
+  sent:   { label: 'שלחנו פרטים',    cls: 'b-sent' },
+  wait:   { label: 'ממתינים',         cls: 'b-wait' },
+  ok:     { label: 'מאושר',           cls: 'b-ok' },
+  paid:   { label: 'שולם',            cls: 'b-paid' },
+  cancel: { label: 'בוטל',            cls: 'b-cancel' },
+};
+const SOURCE = {
+  wa:    { label: 'ווצאפ',     cls: 'src-wa' },
+  ig:    { label: 'אינסטגרם', cls: 'src-ig' },
+  ab:    { label: 'Airbnb',   cls: 'src-ab' },
+  tel:   { label: 'טלפון',    cls: 'src-tel' },
+  other: { label: 'אחר',      cls: 'src-tel' },
+};
+const TYPE_LABEL = { family:'משפחה', retreat:'ריטריט', event:'אירוע', group:'קבוצה', other:'אחר' };
+const KANBAN_COLS = ['new','talk','sent','wait','ok'];
+
+let leads = JSON.parse(localStorage.getItem('bahar_leads') || '[]');
+let editingId = null;
+let currentFilter = 'all';
+let currentView = 'list';
+
+if (leads.length === 0) {
+  leads = [
+    { id:1, name:'משפחת כהן', phone:'052-1234567', source:'wa', type:'family', dates:'14–16 מאי', people:'6', price:1800, status:'new', reminder:'2026-04-28', notes:'ילדים קטנים, מחפשים שקט', created:'24.04' },
+    { id:2, name:'קבוצת יוגה — דנה', phone:'054-9876543', source:'ig', type:'retreat', dates:'2–4 יוני', people:'12', price:3600, status:'talk', reminder:'2026-04-27', notes:'ריטריט יוגה, מעוניינות בדממה', created:'23.04' },
+    { id:3, name:'איריס לוי', phone:'050-5555555', source:'ab', type:'family', dates:'10 מאי', people:'2', price:600, status:'sent', reminder:'', notes:'זוג, חדר אחד', created:'22.04' },
+    { id:4, name:'ארגון בריאות — רות', phone:'053-7777777', source:'tel', type:'group', dates:'18–20 יוני', people:'20', price:7200, status:'wait', reminder:'2026-04-30', notes:'כנס עבודה + טבע', created:'20.04' },
+    { id:5, name:'משפחת אברהם', phone:'052-3333333', source:'wa', type:'event', dates:'9–11 מאי', people:'8', price:2400, status:'ok', reminder:'', notes:'חינה משפחתית, צריכים קייטרינג', created:'18.04' },
+    { id:6, name:'נעמה שיר', phone:'054-2222222', source:'ig', type:'retreat', dates:'25–27 אפריל', people:'15', price:4500, status:'paid', reminder:'', notes:'קבוצת נשים, מדיטציה', created:'15.04' },
+  ];
+  save();
+}
+
+function save() { localStorage.setItem('bahar_leads', JSON.stringify(leads)); }
+
+function filtered() {
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  return leads.filter(l => {
+    if (currentFilter !== 'all' && l.status !== currentFilter) return false;
+    if (q && !l.name.toLowerCase().includes(q) && !(l.notes||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function isUrgent(l) { return l.reminder && l.reminder <= todayStr(); }
+
+function renderStats() {
+  const active = leads.filter(l => !['paid','cancel'].includes(l.status));
+  const pipeline = leads.filter(l => !['paid','cancel'].includes(l.status)).reduce((s,l) => s + (Number(l.price)||0), 0);
+  const approved = leads.filter(l => l.status === 'ok' || l.status === 'paid').length;
+  const urgent = leads.filter(l => isUrgent(l)).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat stat-accent"><div class="stat-num">${active.length}</div><div class="stat-label">פניות פעילות</div></div>
+    <div class="stat stat-amber"><div class="stat-num">${urgent}</div><div class="stat-label">דורשות תשומת לב</div></div>
+    <div class="stat stat-blue"><div class="stat-num">${approved}</div><div class="stat-label">מאושרות / שולם</div></div>
+    <div class="stat stat-purple"><div class="stat-num">₪${pipeline.toLocaleString()}</div><div class="stat-label">בצנרת</div></div>
+  `;
+}
+
+function renderList() {
+  const list = filtered();
+  document.getElementById('listView').innerHTML = list.length === 0
+    ? '<div style="text-align:center;padding:3rem;color:var(--muted);font-size:14px;">אין לקוחות להצגה</div>'
+    : list.map(l => {
+      const s = STATUS[l.status] || STATUS.new;
+      const src = SOURCE[l.source] || SOURCE.other;
+      const urgent = isUrgent(l);
+      return `<div class="lead-card${urgent?' urgent':''}" onclick="openModal(${l.id})">
+        <div>
+          <div class="lc-name">${l.name}</div>
+          <div class="lc-meta">
+            <span class="badge ${s.cls}">${s.label}</span>
+            <span class="badge ${src.cls}">${src.label}</span>
+            ${l.type ? `<span class="lc-detail">${TYPE_LABEL[l.type]||''}</span>` : ''}
+            ${l.dates ? `<span class="lc-detail">📅 ${l.dates}</span>` : ''}
+            ${l.people ? `<span class="lc-detail">👥 ${l.people} אנשים</span>` : ''}
+          </div>
+          ${l.notes ? `<div class="lc-note">${l.notes}</div>` : ''}
+        </div>
+        <div class="lc-right">
+          ${l.price ? `<div class="lc-price">₪${Number(l.price).toLocaleString()}</div>` : ''}
+          ${urgent ? `<div class="reminder-badge">⚡ תזכורת היום</div>` : (l.reminder ? `<div style="font-size:11px;color:var(--muted)">🔔 ${l.reminder}</div>` : '')}
+          <div style="font-size:11px;color:var(--muted)">${l.created||''}</div>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function renderKanban() {
+  document.getElementById('kanbanView').innerHTML = KANBAN_COLS.map(col => {
+    const colLeads = leads.filter(l => l.status === col);
+    const s = STATUS[col];
+    return `<div class="kb-col">
+      <div class="kb-header">
+        <span class="kb-title">${s.label}</span>
+        <span class="kb-count">${colLeads.length}</span>
+      </div>
+      ${colLeads.map(l => {
+        const src = SOURCE[l.source] || SOURCE.other;
+        const urgent = isUrgent(l);
+        return `<div class="kb-card" onclick="openModal(${l.id})">
+          <div class="kb-name">${l.name}</div>
+          <div class="kb-sub"><span class="badge ${src.cls}" style="font-size:10px">${src.label}</span> ${l.dates||''}</div>
+          ${l.people ? `<div class="kb-sub" style="margin-top:3px">👥 ${l.people} אנשים</div>` : ''}
+          ${l.price ? `<div class="kb-price">₪${Number(l.price).toLocaleString()}</div>` : ''}
+          ${urgent ? `<div class="kb-reminder">⚡ תזכורת היום</div>` : (l.reminder ? `<div class="kb-reminder" style="color:var(--muted)">🔔 ${l.reminder}</div>` : '')}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function render() { renderStats(); if (currentView === 'list') renderList(); else renderKanban(); }
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('listView').classList.toggle('hidden', v !== 'list');
+  document.getElementById('kanbanView').classList.toggle('hidden', v !== 'kanban');
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+function setFilter(btn, f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function openModal(id) {
+  editingId = id || null;
+  const modal = document.getElementById('modalOverlay');
+  const del = document.getElementById('deleteBtn');
+  if (id) {
+    const l = leads.find(x => x.id === id);
+    if (!l) return;
+    document.getElementById('modalTitle').textContent = l.name;
+    document.getElementById('f_name').value = l.name;
+    document.getElementById('f_phone').value = l.phone||'';
+    document.getElementById('f_source').value = l.source||'wa';
+    document.getElementById('f_type').value = l.type||'family';
+    document.getElementById('f_dates').value = l.dates||'';
+    document.getElementById('f_people').value = l.people||'';
+    document.getElementById('f_price').value = l.price||'';
+    document.getElementById('f_status').value = l.status||'new';
+    document.getElementById('f_reminder').value = l.reminder||'';
+    document.getElementById('f_notes').value = l.notes||'';
+    del.classList.remove('hidden');
+  } else {
+    document.getElementById('modalTitle').textContent = 'לקוח חדש';
+    ['f_name','f_phone','f_dates','f_people','f_price','f_reminder','f_notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f_source').value = 'wa';
+    document.getElementById('f_type').value = 'family';
+    document.getElementById('f_status').value = 'new';
+    del.classList.add('hidden');
+  }
+  modal.classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function saveLead() {
+  const today = new Date();
+  const dateStr = `${today.getDate().toString().padStart(2,'0')}.${(today.getMonth()+1).toString().padStart(2,'0')}`;
+  const data = {
+    id: editingId || Date.now(),
+    name: document.getElementById('f_name').value.trim(),
+    phone: document.getElementById('f_phone').value.trim(),
+    source: document.getElementById('f_source').value,
+    type: document.getElementById('f_type').value,
+    dates: document.getElementById('f_dates').value.trim(),
+    people: document.getElementById('f_people').value.trim(),
+    price: document.getElementById('f_price').value,
+    status: document.getElementById('f_status').value,
+    reminder: document.getElementById('f_reminder').value,
+    notes: document.getElementById('f_notes').value.trim(),
+    created: editingId ? (leads.find(l => l.id === editingId)||{}).created : dateStr,
+  };
+  if (!data.name) return alert('נא להזין שם לקוח');
+  if (editingId) { leads = leads.map(l => l.id === editingId ? data : l); }
+  else { leads.push(data); }
+  save(); closeModal(); render();
+}
+
+function deleteLead() {
+  if (!editingId || !confirm('למחוק לקוח זה?')) return;
+  leads = leads.filter(l => l.id !== editingId);
+  save(); closeModal(); render();
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+render();
+</script>
+</body>
+</html>
